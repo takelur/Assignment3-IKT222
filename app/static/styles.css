@@ -1,0 +1,336 @@
+/* General Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+a {
+    text-decoration: none;
+    color: #007bff;
+}
+a:hover {
+    color: #0056b3;
+}
+
+/* Header Bar */
+#header-bar nav{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    color: #fff;
+    padding: 10px 20px;
+    text-align: center;
+}
+#header-bar #logo {
+    font-size: 24px;
+    font-weight: bold;
+    flex: 1;
+}
+#header-bar #logo a {
+    color: #fff;
+    text-decoration: none;
+}
+#header-bar #logo a:hover {
+    text-decoration: underline; 
+}
+#header-bar #login-button-container {
+    margin-left: auto;
+}
+
+/* Login Button */
+.login-title {
+    text-align: center;
+}
+.register-title {
+    text-align: center;
+}
+
+/* User Display */
+.username-display {
+    margin-right: 10px;
+    color: white;
+}
+
+/* Error Message */
+.error-message {
+    color: red;
+    margin-bottom: 10px;
+}
+
+/* Posts Section */
+#posts-section {
+    padding: 20px;
+}
+.post-card {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease-in-out;
+}
+.post-card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+.post-card h2 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+.post-card small {
+    color: #666;
+}
+
+/* Create Post Section */
+#create-post-section {
+    padding: 20px;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="file"],
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* Submit Button */
+.submit-button {
+    background-color: #28a745;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.submit-button:hover {
+    background-color: #218838;
+}
+
+/* Login Form Container */
+#login-form-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+/* Register Form Container */
+#register-form-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    #header-bar nav, #posts-section, #create-post-section {
+        padding: 10px;
+    }
+}
+
+
+/* Post Container */
+#post-container {
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+}
+.post {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.post-title {
+    margin-top: 0;
+}
+.post-meta {
+    color: #888;
+    font-size: 0.9em;
+    margin-bottom: 20px;
+}
+.post-content {
+    line-height: 1.6;
+}
+
+/* Comments Section */
+.comments-section {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.comments-section h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+.comment {
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.comment-content {
+    margin: 0;
+    color: #333;
+}
+.comment-meta {
+    margin-top: 10px;
+    font-size: 0.85em;
+    color: #666;
+}
+.comments-section form {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.comments-section textarea {
+    width: 100%;
+    height: 100px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+}
+.delete-comment-btn {
+    padding: 4px 6px;
+    font-size: 7px; 
+    margin-left: 2px; 
+    margin-top: 8px;
+}
+
+
+/* Back Button */
+.back-button-container {
+    margin: 20px;
+    text-align: left;
+}
+.back-button-container button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+.back-button-container button:hover {
+    background-color: #0056b3;
+}
+
+
+/* Delete Post Button */
+.delete-button-container {
+    margin: 20px;
+    text-align: left;
+}
+
+.delete-button-container button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+.delete-button-container button:hover {
+    background-color: #0056b3;
+}
+
+/* Create Post Button Container */
+#posts-section #create-post-button {
+    margin-bottom: 20px; /* Adds space below the button */
+    text-align: left; /* Centers the button in the container */
+}
+
+/* Search Container */
+.search-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    padding-bottom: 8px;
+}
+.search-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.search-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #007bff;
+}
+
+/* Button Styles */
+.btn, .btn:link, .btn:visited, .btn:hover, .btn:active {
+    display: inline-block;
+    background-color: #007bff;
+    color: white; /* Ensures text color is white */
+    padding: 10px 15px;
+    text-align: center;
+    border-radius: 4px;
+    text-decoration: none; /* Removes underline from text */
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    border: none; /* Optional: Removes border */
+    outline: none; /* Optional: Removes focus outline */
+}
+.btn:hover {
+    background-color: #0056b3;
+}
+
+
+/* Post Image */
+.post-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+
+/* Things might overwrite eachother here, I have not looked through this after finishing the application and performing some changes */

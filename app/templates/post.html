@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ post['title'] }} - Håvards blogg</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- Header Bar -->
+    <div id="header-bar">
+        <nav>
+            <div id="logo">
+                <a href="{{ url_for('index') }}">Håvards blogg</a>
+            </div>    
+            
+            <!-- Conditional Display for Login/Logout -->
+            <div id="login-button-container">
+                {% if 'username' in session %}
+                    <span class="username-display">{{ session['username'] }}</span>
+                    <a href="{{ url_for('logout') }}" class="btn">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn">Login</a>
+                {% endif %}
+            </div>
+        </nav>
+    </div>
+
+    <!-- Back Button -->
+    <div class="back-button-container">
+        <a href="{{ url_for('index') }}" class="btn">Go Back</a>
+    </div>    
+
+    <!-- Conditional delete post button -->
+    {% if session['username'] == post['username'] or session['is_admin'] %}
+    <div class="delete-button-container">
+        <a href="{{ url_for('delete_post', post_id=post['id']) }}" class="btn">Delete</a>
+    </div>
+    {% endif %}
+
+    
+    <!-- Post Container -->
+    <div id="post-container">
+        <article class="post">
+            <!-- Post Title -->
+            <h1 class="post-title">{{ post['title'] }}</h1>
+            {% if post['image'] %}
+            <div class="post-image">
+                <img src="{{ url_for('static', filename='images/' + post['image']) }}" alt="Post Image">
+            </div>
+            {% endif %}
+            <!-- Post Content -->
+            <div class="post-content">{{ post['content'] }}</div>
+            <div class="post-meta">Posted by {{ post['username'] }} on {{ post['created'] }}</div>
+            
+            <!-- Comments Section -->
+            <div class="comments-section">
+                <h2>Comments</h2>
+                <!-- Comment Form -->
+                <form method="post" action="{{ url_for('add_comment', post_id=post['id']) }}">
+                    <textarea name="comment_content" required></textarea>
+                    <input type="submit" value="Submit Comment" class="btn">
+                </form>
+
+                <!-- Display Comments -->
+                {% for comment in comments %}
+                    <div class="comment">
+                        <p class="comment-content">{{ comment['content'] }}</p>
+                        <div class="comment-meta">
+                            Posted by {{ comment['username'] }} on {{ comment['created'] }}
+                        </div>
+                        <!-- Delete button for admin and comment owner -->
+                        {% if session['username'] == comment['username'] or session.get('is_admin') %}
+                            <a href="{{ url_for('delete_comment', comment_id=comment['id']) }}" class="btn delete-comment-btn">Delete</a>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </article>
+    </div>
+</body>
+</html>

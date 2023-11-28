@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Håvards blog</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- Header Bar -->
+    <div id="header-bar">
+        <nav>
+            <div id="logo">
+                <a href="{{ url_for('index') }}">Håvards blogg</a>
+            </div>
+            
+            <!-- Conditional Display for Login/Logout -->
+            <div id="login-button-container">
+                {% if 'username' in session %}
+                    <span class="username-display">{{ session['username'] }}</span>
+                    <a href="{{ url_for('logout') }}" class="btn">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn">Login</a>
+                {% endif %}
+            </div>            
+        </nav>
+    </div>
+
+    
+    <!-- Posts Section -->
+    <div id="posts-section">
+        <h1>Posts</h1>
+
+        <!-- Search Bar -->
+        <div class="search-container">
+            <form action="{{ url_for('search') }}" method="get" class="search-container">
+                <input type="text" name="search_term" class="search-input" placeholder="Search...">
+                <button type="submit" class="search-btn">Search</button>
+            </form>
+        </div>        
+        
+        <!-- Create Post Button -->
+        <div id="create-post-button">
+            <a href="{{ url_for('create') }}" class="btn">Create New Post</a>
+        </div>
+
+        <!-- Conditional if for search results--> 
+        {% if search_term %}
+            <div class="search-term-container">
+                <h2>Search Results for "{{ search_term }}:"</h2>
+            </div>
+        {% endif %}
+
+        <!-- Posts Sectio -->
+        <div class="posts-container">
+            {% for post in posts %}
+                <div class="post-card">
+                    <a href="{{ url_for('post', post_id=post['id']) }}">
+                        <h2>{{ post['title'] }}</h2>
+                        <small>Posted by {{ post['username'] }} on {{ post['created'] }}</small>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>    
+</body>
+</html>
