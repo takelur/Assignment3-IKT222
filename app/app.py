@@ -144,15 +144,14 @@ def create():
 # Route to delete a post
 @app.route('/delete_post/<int:post_id>')
 def delete_post(post_id):
-    conn = get_db_connection()
     post = get_post(post_id)
 
     if not post:
-        conn.close()
         return "Post not found."
 
     # Check if the current user is the owner or an admin
     if session.get('username') == post['username'] or session.get('is_admin'):
+        conn = get_db_connection()
         # First, delete all comments associated with the post
         conn.execute('DELETE FROM comments WHERE post_id = ?', (post_id,))
         # then delete the image file,
@@ -168,7 +167,6 @@ def delete_post(post_id):
         # Return to home page
         return redirect(url_for('index'))
     else:
-        conn.close()
         # Return error message
         return "You do not have permission to delete this post."
 
