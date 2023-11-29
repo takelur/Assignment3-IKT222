@@ -311,6 +311,11 @@ def register():
         if bleach.clean(username) != username:
             error = "Username contains invalid characters. Please try again."
             return render_template('register.html', error=error)
+        
+        # Check if passwords match
+        if password != confirm_pw:
+            error = "Passwords do not match. Please try again."
+            return render_template('register.html', error=error)
 
         conn = get_db_connection()
         # Check if username already exists
@@ -318,8 +323,6 @@ def register():
 
         if existing_user:
             error = "Username already exists. Please choose a different username."
-        elif password != confirm_pw:
-            error = "Passwords do not match. Please try again."
         else:
             # Generate password hash
             password_hash = generate_password_hash(password)
