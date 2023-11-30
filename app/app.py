@@ -158,7 +158,7 @@ def delete_post(post_id):
     post = get_post(post_id)
 
     if not post:
-        return "Post not found."
+        return render_template('404.html'), 404
 
     # Check if the current user is the owner or an admin
     if session.get('username') == post['username'] or session.get('is_admin'):
@@ -179,7 +179,8 @@ def delete_post(post_id):
         return redirect(url_for('index'))
     else:
         # Return error message
-        return "You do not have permission to delete this post."
+        flash("You do not have permission to delete this post.", "error")
+        return redirect(url_for('post', post_id=post_id))
 
 
 # Route to search for posts
@@ -219,6 +220,9 @@ def post(post_id):
     comments = get_comments(post_id)
 
     conn.close()
+    if not post:
+        return render_template('404.html'), 404
+    
     # Go to post template with the post and comments
     return render_template('post.html', post=post, comments=comments)
 
@@ -253,7 +257,7 @@ def delete_comment(comment_id):
 
     if not comment:
         conn.close()
-        return "Comment not found."
+        return render_template('404.html'), 404
 
     # Check if the current user is the owner of the comment or an admin
     if session.get('username') == comment['username'] or session.get('is_admin'):
@@ -261,7 +265,7 @@ def delete_comment(comment_id):
         conn.commit()
     else:
         conn.close()
-        return "You do not have permission to delete this comment."
+        flash("You do not have permission to delete this comment.", "error")
 
     conn.close()
 
@@ -297,10 +301,12 @@ def login():
             # Redirects to index after login
             return redirect(url_for('index'))
         else:
-            error = "Incorrect username or password. Please try again."
+            flash("Invalid TOTP code. Please try again.", "error")
+        if not username or not password:
+            flash("Please enter both username and password.", "error")
 
-    # Refresh with error message if unsuccessful login
-    return render_template('login.html', error=error)
+            else:
+                flash("Incorrect username or password. Please try again.", "error")
 
 
 # Route to logout
@@ -324,20 +330,18 @@ def register():
 
         # Check if username contains invalid characters
         if bleach.clean(username) != username:
-            error = "Username contains invalid characters. Please try again."
-            return render_template('register.html', error=error)
+            flash("Username contains invalid characters. Please try again.", "error")
         
         # Check if passwords match
-        if password != confirm_pw:
-            error = "Passwords do not match. Please try again."
-            return render_template('register.html', error=error)
+        elif password != confirm_pw:
+            flash("Passwords do not match. Please try again.", "error")
 
         conn = get_db_connection()
         # Check if username already exists
         existing_user = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
 
-        if existing_user:
-            error = "Username already exists. Please choose a different username."
+            if existing_user:
+                flash("Username already exists. Please choose a different username.", "error")
         else:
             # Generate password hash
             password_hash = generate_password_hash(password)
