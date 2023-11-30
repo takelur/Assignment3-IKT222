@@ -2,6 +2,6 @@ version: '3'
 
 services:
   blog:
-    image: ghcr.io/takelur/takelurblog:latest
+    image: ghcr.io/takelur/takelurblog-assign03ikt222:latest
     ports:
       - "5000:5000"
