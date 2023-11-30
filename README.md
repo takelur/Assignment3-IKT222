@@ -1,4 +1,4 @@
-# Assignment 02 - XSS - Software Security
+# Assignment 03 - User Authentication - Software Security
 
 ## Running application with Docker Compose (recommended):
 ```bash
