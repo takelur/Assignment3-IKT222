@@ -20,6 +20,10 @@ DATABASE = os.path.join(BASE_DIR, '../db/database.db')
 app = Flask(__name__)
 app.secret_key = '1234567891234567'
 
+# Initialize the Limiter
+limiter = Limiter(key_func=get_remote_address)
+limiter.init_app(app)
+
 # Function to get the sqlite3 database connection
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
@@ -266,15 +270,19 @@ def delete_comment(comment_id):
 
 
 # Route to login
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET'])
+def show_login():
+    show_totp_field = session.get('show_totp_field', False)
+    return render_template('login.html', show_totp_field=show_totp_field)
+
+@app.route('/login', methods=['POST'])
+@limiter.limit("5 per 10 minutes")
 def login():
-    error = None  # Initialize error variable
+    # If temp username is in session, the user is at the TOTP verification steop
+    if 'temp_username' in session:
+        totp_code = request.form.get('totp_code')
 
-    # Check if submit is pressed
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
+        # Retrieve user
         conn = get_db_connection()
         # Check if username exists
         user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
