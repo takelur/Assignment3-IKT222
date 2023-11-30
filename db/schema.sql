@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS comments;
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL,
-    password TEXT NOT NULL,
+    password TEXT,
     is_admin BOOLEAN NOT NULL DEFAULT 0,
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     totp_secret TEXT
