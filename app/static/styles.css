@@ -40,12 +40,31 @@ a:hover {
     margin-left: auto;
 }
 
+/* Error Message */
+.error {
+    color: red;
+    margin-bottom: 10px;
+}
+
 /* Login Button */
 .login-title {
     text-align: center;
 }
 .register-title {
     text-align: center;
+}
+
+.google-btn {
+    background: #ce3e31;
+    color: white;
+    padding: 10px 15px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.google-btn:hover {
+    background: #b6301b;
 }
 
 /* User Display */
@@ -154,6 +173,27 @@ a:hover {
     align-items: center;
     flex-direction: column;
 }
+/* totp-verification-container */
+#totp-verification-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+#qr-code-img {
+    max-width: 100%;
+    height: auto; 
+    margin-top: 20px; 
+}
+
 
 
 /* Responsive Design */
