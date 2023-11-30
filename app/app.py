@@ -57,14 +57,18 @@ def get_all_posts():
     if conn is None:
         return None
     else:
-        posts = conn.execute('''
-            SELECT posts.id, posts.title, posts.content, posts.created, users.username 
-            FROM posts 
-            JOIN users ON posts.user_id = users.id
-            ORDER BY posts.created DESC
-        ''').fetchall()
-        conn.close()
-        return posts
+        try:
+            posts = conn.execute('''
+                SELECT posts.id, posts.title, posts.content, posts.created, users.username 
+                FROM posts 
+                JOIN users ON posts.user_id = users.id
+                ORDER BY posts.created DESC
+            ''').fetchall()
+            conn.close()
+            return posts
+        except sqlite3.Error as e:
+            print(f"Fatal error: {e}")
+            return None
 
 # Function to get a single post from the database
 def get_post(post_id):
@@ -73,14 +77,18 @@ def get_post(post_id):
     if conn is None:
         return None
     else:
-        post = conn.execute('''
-            SELECT posts.id, posts.title, posts.content, posts.created, posts.image, users.username 
-            FROM posts 
-            JOIN users ON posts.user_id = users.id
-            WHERE posts.id = ?
-        ''', (post_id,)).fetchone()
-        conn.close()
-        return post
+        try:
+            post = conn.execute('''
+                SELECT posts.id, posts.title, posts.content, posts.created, posts.image, users.username 
+                FROM posts 
+                JOIN users ON posts.user_id = users.id
+                WHERE posts.id = ?
+            ''', (post_id,)).fetchone()
+            conn.close()
+            return post
+        except sqlite3.Error as e:
+            print(f"Fatal error: {e}")
+            return None
 
 # Function to get all comments for a single post from the database
 def get_comments(post_id):
@@ -89,15 +97,19 @@ def get_comments(post_id):
     if conn is None:
         return None
     else:
-        comments = conn.execute('''
-            SELECT comments.id, comments.content, comments.created, users.username 
-            FROM comments
-            JOIN users ON comments.user_id = users.id
-            WHERE comments.post_id = ?
-            ORDER BY comments.created DESC
-        ''', (post_id,)).fetchall()
-        conn.close()
-        return comments
+        try:
+            comments = conn.execute('''
+                SELECT comments.id, comments.content, comments.created, users.username 
+                FROM comments
+                JOIN users ON comments.user_id = users.id
+                WHERE comments.post_id = ?
+                ORDER BY comments.created DESC
+            ''', (post_id,)).fetchall()
+            conn.close()
+            return comments
+        except sqlite3.Error as e:
+            print(f"Fatal error: {e}")
+            return None
 
 # Function to get a single comment from the database
 def get_comment(comment_id):
@@ -106,14 +118,18 @@ def get_comment(comment_id):
     if conn is None:
         return None
     else:
-        comment = conn.execute('''
-            SELECT comments.id, comments.content, comments.created, comments.post_id, users.username  
-            FROM comments
-            JOIN users ON comments.user_id = users.id
-            WHERE comments.id = ?
-        ''', (comment_id,)).fetchone()
-        conn.close()
-        return comment
+        try:
+            comment = conn.execute('''
+                SELECT comments.id, comments.content, comments.created, comments.post_id, users.username  
+                FROM comments
+                JOIN users ON comments.user_id = users.id
+                WHERE comments.id = ?
+            ''', (comment_id,)).fetchone()
+            conn.close()
+            return comment
+        except sqlite3.Error as e:
+            print(f"Fatal error: {e}")
+            return None
 
 # Allowed file extensions for image upload
 def allowed_file(filename):
@@ -127,10 +143,14 @@ def get_current_user_id():
         conn = get_db_connection()
         if conn is None:
             return 2
-        user = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
-        conn.close()
-        if user:
-            return user['id']
+        try:
+            user = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
+            conn.close()
+            if user:
+                return user['id']
+        except sqlite3.Error as e:
+            print(f"Fatal error: {e}")
+            return 2
     return 2  # Default user id for "guest" (not logged in users)
 
 # Function to generate TOTP QR code
@@ -197,11 +217,19 @@ def create():
                     return render_template('create.html')
 
                 # Store the new filename in the database
-                conn.execute('INSERT INTO posts (title, content, image, user_id) VALUES (?, ?, ?, ?)',
-                     (title, content, new_filename, user_id))
+                try:
+                    conn.execute('INSERT INTO posts (title, content, image, user_id) VALUES (?, ?, ?, ?)',
+                        (title, content, new_filename, user_id))
+                except sqlite3.Error as e:
+                    print(f"Fatal error: {e}")
+                    return render_template('500.html'), 500
         else:
-            conn.execute('INSERT INTO posts (title, content, user_id) VALUES (?, ?, ?)',
-                     (title, content, user_id))
+            try:
+                conn.execute('INSERT INTO posts (title, content, user_id) VALUES (?, ?, ?)',
+                        (title, content, user_id))
+            except sqlite3.Error as e:
+                print(f"Fatal error: {e}")
+                return render_template('500.html'), 500
 
         conn.commit()
         conn.close()
@@ -229,8 +257,13 @@ def delete_post(post_id):
         if conn is None:
             return render_template('500.html'), 500
         
-        # First, delete all comments associated with the post
-        conn.execute('DELETE FROM comments WHERE post_id = ?', (post_id,))
+        try:
+            # First, delete all comments associated with the post
+            conn.execute('DELETE FROM comments WHERE post_id = ?', (post_id,))
+        except sqlite3.Error as e:
+            print(f"Fatal error: {e}")
+            return render_template('500.html'), 500
+        
         # then delete the image file,
         if post['image']:
             try:
@@ -240,8 +273,13 @@ def delete_post(post_id):
                 flash("Error deleting image file. Please try again.", "error")
                 return redirect(url_for('post', post_id=post_id))
         # finally, delete the post itself
-        conn.execute('DELETE FROM posts WHERE id = ?', (post_id,))
-        conn.commit()
+        try:
+            conn.execute('DELETE FROM posts WHERE id = ?', (post_id,))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Fatal error: {e}")
+            return render_template('500.html'), 500
+        
         conn.close()
         # Return to home page
         return redirect(url_for('index'))
@@ -263,14 +301,18 @@ def search():
     if conn is None:
         return render_template('500.html'), 500
 
-    # Search in DB for posts matching the search term
-    posts = conn.execute('''
-        SELECT posts.id, posts.title, posts.content, posts.created, users.username 
-        FROM posts 
-        JOIN users ON posts.user_id = users.id
-        WHERE posts.title LIKE ? OR posts.content LIKE ?
-        ORDER BY posts.created DESC
-    ''', ('%' + search_term + '%', '%' + search_term + '%')).fetchall()
+    try:
+        # Search in DB for posts matching the search term
+        posts = conn.execute('''
+            SELECT posts.id, posts.title, posts.content, posts.created, users.username 
+            FROM posts 
+            JOIN users ON posts.user_id = users.id
+            WHERE posts.title LIKE ? OR posts.content LIKE ?
+            ORDER BY posts.created DESC
+        ''', ('%' + search_term + '%', '%' + search_term + '%')).fetchall()
+    except sqlite3.Error as e:
+        print(f"Fatal error: {e}")
+        return render_template('500.html'), 500
 
     conn.close()
 
@@ -308,9 +350,13 @@ def add_comment(post_id):
     if conn is None:
         return render_template('500.html'), 500
 
-    # Insert the comment into DB
-    conn.execute('INSERT INTO comments (content, post_id, user_id) VALUES (?, ?, ?)',
-                 (comment_content, post_id, user_id))
+    try:
+        # Insert the comment into DB
+        conn.execute('INSERT INTO comments (content, post_id, user_id) VALUES (?, ?, ?)',
+                    (comment_content, post_id, user_id))
+    except sqlite3.Error as e:
+        print(f"Fatal error: {e}")
+        return render_template('500.html'), 500
     
     conn.commit()
     conn.close()
@@ -336,8 +382,12 @@ def delete_comment(comment_id):
 
     # Check if the current user is the owner of the comment or an admin
     if session.get('username') == comment['username'] or session.get('is_admin'):
-        conn.execute('DELETE FROM comments WHERE id = ?', (comment_id,))
-        conn.commit()
+        try:
+            conn.execute('DELETE FROM comments WHERE id = ?', (comment_id,))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Fatal error: {e}")
+            return render_template('500.html'), 500
     else:
         conn.close()
         flash("You do not have permission to delete this comment.", "error")
@@ -369,7 +419,14 @@ def login():
             session.pop('show_totp_field', None) 
             return render_template('500.html'), 500
         
-        user = conn.execute('SELECT username, is_admin, totp_secret FROM users WHERE username = ?', (session['temp_username'],)).fetchone()
+        try:
+            user = conn.execute('SELECT username, is_admin, totp_secret FROM users WHERE username = ?', (session['temp_username'],)).fetchone()
+        except sqlite3.Error as e:
+            print(f"Fatal error: {e}")
+            session.pop('temp_username', None)
+            session.pop('show_totp_field', None) 
+            return render_template('500.html'), 500
+        
         conn.close()
 
         # Check if TOTP code is valid
@@ -398,7 +455,12 @@ def login():
             if conn is None:
                 return render_template('500.html'), 500
 
-            user = conn.execute('SELECT username, password, totp_secret, is_admin FROM users WHERE username = ?', (username,)).fetchone()
+            try:
+                user = conn.execute('SELECT username, password, totp_secret, is_admin FROM users WHERE username = ?', (username,)).fetchone()
+            except sqlite3.Error as e:
+                print(f"Fatal error: {e}")
+                return render_template('500.html'), 500
+            
             conn.close()
 
             # Return if password is None (OAuth users)
@@ -457,7 +519,12 @@ def authorize_google():
     if conn is None:
         return render_template('500.html'), 500
     
-    user = conn.execute('SELECT username, is_admin FROM users WHERE username = ?', (user_info['email'],)).fetchone()
+    try:
+        user = conn.execute('SELECT username, is_admin FROM users WHERE username = ?', (user_info['email'],)).fetchone()
+    except sqlite3.Error as e:
+        print(f"Fatal error: {e}")
+        return render_template('500.html'), 500
+    
     conn.close()
 
     # Log in if user exists
@@ -472,9 +539,14 @@ def authorize_google():
         if conn is None:
             return render_template('500.html'), 500
         
-        conn.execute('INSERT INTO users (username, is_admin) VALUES (?, ?)',
-                     (user_info['email'], False))
-        conn.commit()
+        try:
+            conn.execute('INSERT INTO users (username, is_admin) VALUES (?, ?)',
+                        (user_info['email'], False))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Fatal error: {e}")
+            return render_template('500.html'), 500
+        
         conn.close()
         session['username'] = user_info['email']
         session['is_admin'] = False
@@ -512,8 +584,12 @@ def register():
             if conn is None:
                 return render_template('500.html'), 500
             
-            # Check if username already exists
-            existing_user = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
+            try:
+                # Check if username already exists
+                existing_user = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
+            except sqlite3.Error as e:
+                print(f"Fatal error: {e}")
+                return render_template('500.html'), 500
 
             if existing_user:
                 flash("Username already exists. Please choose a different username.", "error")
@@ -565,9 +641,14 @@ def verify_totp():
         if conn is None:
             return render_template('500.html'), 500
         
-        conn.execute('INSERT INTO users (username, password, totp_secret) VALUES (?, ?, ?)',
-                     (username, password_hash, totp_secret))
-        conn.commit()
+        try:
+            conn.execute('INSERT INTO users (username, password, totp_secret) VALUES (?, ?, ?)',
+                        (username, password_hash, totp_secret))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Fatal error: {e}")
+            return render_template('500.html'), 500
+        
         conn.close()
         # Redirect to the login page
         return redirect(url_for('login'))
