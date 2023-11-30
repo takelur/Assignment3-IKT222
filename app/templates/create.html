@@ -34,6 +34,14 @@
     <!-- Create Post Section -->
     <div id="create-post-section">
         <h1>Create New Post</h1>
+        <!-- Flash Message https://stackoverflow.com/questions/44569040/change-color-of-flask-flash-messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         <form method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="image">Upload Image:</label>

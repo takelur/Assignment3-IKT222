@@ -42,58 +42,78 @@ oauth.register(
 
 # Function to get the sqlite3 database connection
 def get_db_connection():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row # enables column access by name
-    return conn
+    try:
+        conn = sqlite3.connect(DATABASE)
+        conn.row_factory = sqlite3.Row # enables column access by name
+        return conn
+    except sqlite3.Error as e:
+        print(f"Fatal error: {e}")
+        return None
 
 # Function to get all posts from the database
 def get_all_posts():
     conn = get_db_connection()
-    posts = conn.execute('''
-        SELECT posts.id, posts.title, posts.content, posts.created, users.username 
-        FROM posts 
-        JOIN users ON posts.user_id = users.id
-        ORDER BY posts.created DESC
-    ''').fetchall()
-    conn.close()
-    return posts
+
+    if conn is None:
+        return None
+    else:
+        posts = conn.execute('''
+            SELECT posts.id, posts.title, posts.content, posts.created, users.username 
+            FROM posts 
+            JOIN users ON posts.user_id = users.id
+            ORDER BY posts.created DESC
+        ''').fetchall()
+        conn.close()
+        return posts
 
 # Function to get a single post from the database
 def get_post(post_id):
     conn = get_db_connection()
-    post = conn.execute('''
-        SELECT posts.id, posts.title, posts.content, posts.created, posts.image, users.username 
-        FROM posts 
-        JOIN users ON posts.user_id = users.id
-        WHERE posts.id = ?
-    ''', (post_id,)).fetchone()
-    conn.close()
-    return post
+
+    if conn is None:
+        return None
+    else:
+        post = conn.execute('''
+            SELECT posts.id, posts.title, posts.content, posts.created, posts.image, users.username 
+            FROM posts 
+            JOIN users ON posts.user_id = users.id
+            WHERE posts.id = ?
+        ''', (post_id,)).fetchone()
+        conn.close()
+        return post
 
 # Function to get all comments for a single post from the database
 def get_comments(post_id):
     conn = get_db_connection()
-    comments = conn.execute('''
-        SELECT comments.id, comments.content, comments.created, users.username 
-        FROM comments
-        JOIN users ON comments.user_id = users.id
-        WHERE comments.post_id = ?
-        ORDER BY comments.created DESC
-    ''', (post_id,)).fetchall()
-    conn.close()
-    return comments
+
+    if conn is None:
+        return None
+    else:
+        comments = conn.execute('''
+            SELECT comments.id, comments.content, comments.created, users.username 
+            FROM comments
+            JOIN users ON comments.user_id = users.id
+            WHERE comments.post_id = ?
+            ORDER BY comments.created DESC
+        ''', (post_id,)).fetchall()
+        conn.close()
+        return comments
 
 # Function to get a single comment from the database
 def get_comment(comment_id):
     conn = get_db_connection()
-    comment = conn.execute('''
-        SELECT comments.id, comments.content, comments.created, comments.post_id, users.username  
-        FROM comments
-        JOIN users ON comments.user_id = users.id
-        WHERE comments.id = ?
-    ''', (comment_id,)).fetchone()
-    conn.close()
-    return comment
+
+    if conn is None:
+        return None
+    else:
+        comment = conn.execute('''
+            SELECT comments.id, comments.content, comments.created, comments.post_id, users.username  
+            FROM comments
+            JOIN users ON comments.user_id = users.id
+            WHERE comments.id = ?
+        ''', (comment_id,)).fetchone()
+        conn.close()
+        return comment
 
 # Allowed file extensions for image upload
 def allowed_file(filename):
@@ -105,6 +125,8 @@ def get_current_user_id():
     username = session.get('username')
     if username:
         conn = get_db_connection()
+        if conn is None:
+            return 2
         user = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
         conn.close()
         if user:
@@ -127,7 +149,12 @@ def generate_qr_code(totp_uri):
 @app.route('/')
 def index():
     posts = get_all_posts()
-    return render_template('index.html', posts=posts)
+
+    if posts is None:
+        print("Error retrieving posts from database") # log to console
+        return render_template('500.html'), 500
+    else:
+        return render_template('index.html', posts=posts)
 
 
 # Route to create a new post
@@ -142,10 +169,10 @@ def create():
         user_id = get_current_user_id() # defaults to guest if not logged in
 
         conn = get_db_connection()
-        # Insert post into database
-        conn.execute('INSERT INTO posts (title, content, user_id) VALUES (?, ?, ?)',
-                     (title, content, user_id))
-        
+
+        if conn is None:
+            return render_template('500.html'), 500
+               
         # Chek if image file is included in request
         if 'image' in request.files:
             image = request.files['image']
@@ -166,9 +193,15 @@ def create():
                     image.save(os.path.join(app.root_path, 'static/images', new_filename))
                 except OSError:
                     print(f"Error saving image file {new_filename}")
+                    flash("Error saving image file. Please try again.", "error")
+                    return render_template('create.html')
 
                 # Store the new filename in the database
-                conn.execute('UPDATE posts SET image = ? WHERE title = ?', (new_filename, title))
+                conn.execute('INSERT INTO posts (title, content, image, user_id) VALUES (?, ?, ?, ?)',
+                     (title, content, new_filename, user_id))
+        else:
+            conn.execute('INSERT INTO posts (title, content, user_id) VALUES (?, ?, ?)',
+                     (title, content, user_id))
 
         conn.commit()
         conn.close()
@@ -176,8 +209,9 @@ def create():
         # Return after successful post creation
         return redirect(url_for('index'))
 
-    # Return the create.html template if no post request is made
-    return render_template('create.html')
+    else:
+        # Return the create.html template if no post request is made
+        return render_template('create.html')
 
 
 # Route to delete a post
@@ -191,6 +225,10 @@ def delete_post(post_id):
     # Check if the current user is the owner or an admin
     if session.get('username') == post['username'] or session.get('is_admin'):
         conn = get_db_connection()
+
+        if conn is None:
+            return render_template('500.html'), 500
+        
         # First, delete all comments associated with the post
         conn.execute('DELETE FROM comments WHERE post_id = ?', (post_id,))
         # then delete the image file,
@@ -199,6 +237,8 @@ def delete_post(post_id):
                 os.remove(os.path.join(app.root_path, 'static/images', post['image']))
             except OSError:
                 print(f"Error deleting image file {post['image']}")
+                flash("Error deleting image file. Please try again.", "error")
+                return redirect(url_for('post', post_id=post_id))
         # finally, delete the post itself
         conn.execute('DELETE FROM posts WHERE id = ?', (post_id,))
         conn.commit()
@@ -208,6 +248,7 @@ def delete_post(post_id):
     else:
         # Return error message
         flash("You do not have permission to delete this post.", "error")
+        print(f"User {session.get('username')} attempted to delete post {post_id}")
         return redirect(url_for('post', post_id=post_id))
 
 
@@ -218,6 +259,9 @@ def search():
     search_term = bleach.clean(request.args.get('search_term', ''))
 
     conn = get_db_connection()
+
+    if conn is None:
+        return render_template('500.html'), 500
 
     # Search in DB for posts matching the search term
     posts = conn.execute('''
@@ -239,18 +283,15 @@ def search():
 
 
 # Route to view a single post
-@app.route('/post/<int:post_id>', methods=['GET', 'POST'])
+@app.route('/post/<int:post_id>', methods=['GET'])
 def post(post_id):
-    conn = get_db_connection()
-
     post = get_post(post_id)
-    
-    comments = get_comments(post_id)
 
-    conn.close()
     if not post:
         return render_template('404.html'), 404
     
+    comments = get_comments(post_id)
+   
     # Go to post template with the post and comments
     return render_template('post.html', post=post, comments=comments)
 
@@ -263,6 +304,9 @@ def add_comment(post_id):
     user_id = get_current_user_id() # defaults to guest if not logged in
 
     conn = get_db_connection()
+    
+    if conn is None:
+        return render_template('500.html'), 500
 
     # Insert the comment into DB
     conn.execute('INSERT INTO comments (content, post_id, user_id) VALUES (?, ?, ?)',
@@ -279,6 +323,9 @@ def add_comment(post_id):
 @app.route('/delete_comment/<int:comment_id>', methods=['GET', 'POST'])
 def delete_comment(comment_id):
     conn = get_db_connection()
+
+    if conn is None:
+        return render_template('500.html'), 500
 
     # Retreive comment
     comment = get_comment(comment_id)
@@ -316,6 +363,12 @@ def login():
 
         # Retrieve user
         conn = get_db_connection()
+
+        if conn is None:
+            session.pop('temp_username', None)
+            session.pop('show_totp_field', None) 
+            return render_template('500.html'), 500
+        
         user = conn.execute('SELECT username, is_admin, totp_secret FROM users WHERE username = ?', (session['temp_username'],)).fetchone()
         conn.close()
 
@@ -341,8 +394,17 @@ def login():
 
         else:
             conn = get_db_connection()
+
+            if conn is None:
+                return render_template('500.html'), 500
+
             user = conn.execute('SELECT username, password, totp_secret, is_admin FROM users WHERE username = ?', (username,)).fetchone()
             conn.close()
+
+            # Return if password is None (OAuth users)
+            if not user["password"]:
+                flash("You cannot log in manually with an OAuth2 account, please use Google", "error")
+                return redirect(url_for('login'))
 
             # Verify password and go to TOTP if the user has a secret
             if user and check_password_hash(user['password'], password) and user['totp_secret']:
@@ -377,7 +439,12 @@ def authorize_google():
         return redirect(url_for('login'))
 
     google = oauth.create_client('google')
-    token = google.authorize_access_token()
+    try:
+        token = google.authorize_access_token()
+    except:
+        flash("Google login failed. Please try again.", "error")
+        return redirect(url_for('login'))
+
     if not token:
         flash("Google login failed. Please try again.", "error")
         return redirect(url_for('login'))
@@ -386,6 +453,10 @@ def authorize_google():
 
     # Check if user exists in database
     conn = get_db_connection()
+
+    if conn is None:
+        return render_template('500.html'), 500
+    
     user = conn.execute('SELECT username, is_admin FROM users WHERE username = ?', (user_info['email'],)).fetchone()
     conn.close()
 
@@ -397,6 +468,10 @@ def authorize_google():
     # Else create user
     else:
         conn = get_db_connection()
+
+        if conn is None:
+            return render_template('500.html'), 500
+        
         conn.execute('INSERT INTO users (username, is_admin) VALUES (?, ?)',
                      (user_info['email'], False))
         conn.commit()
@@ -406,11 +481,10 @@ def authorize_google():
         return redirect(url_for('index'))
 
 
-
 # Route to logout
 @app.route('/logout')
 def logout():
-    session.pop('username', None)  # Remove the username from the session
+    session.pop('username', None)
     session.pop('is_admin', None)
     return redirect(url_for('index'))
 
@@ -434,6 +508,10 @@ def register():
 
         else:
             conn = get_db_connection()
+
+            if conn is None:
+                return render_template('500.html'), 500
+            
             # Check if username already exists
             existing_user = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
 
@@ -483,6 +561,10 @@ def verify_totp():
     if totp_secret and pyotp.TOTP(totp_secret).verify(totp_code):
         # Commit user to database
         conn = get_db_connection()
+
+        if conn is None:
+            return render_template('500.html'), 500
+        
         conn.execute('INSERT INTO users (username, password, totp_secret) VALUES (?, ?, ?)',
                      (username, password_hash, totp_secret))
         conn.commit()
