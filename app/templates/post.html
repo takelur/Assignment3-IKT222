@@ -38,6 +38,14 @@
     </div>
     {% endif %}
 
+    <!-- Flash Message https://stackoverflow.com/questions/44569040/change-color-of-flask-flash-messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     
     <!-- Post Container -->
     <div id="post-container">
