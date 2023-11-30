@@ -39,7 +39,7 @@
                     {% for category, message in messages %}
                         <div class="{{ category }}">{{ message }}</div>
                     {% endfor %}
-            {% endif %}
+                {% endif %}
             {% endwith %}
             
             <!-- Register Form -->
@@ -52,12 +52,35 @@
             <div class="form-group">
                 <input type="password" name="confirm_password" placeholder="Confirm Password" required class="form-control">
             </div>
-            <!-- Buttons: Register and back to login -->
+
+            <!-- Buttons: Register and Back to Login -->
             <div class="form-group button-group">
                 <input type="submit" value="Register" class="btn">
                 <a href="{{ url_for('login') }}" class="btn back-btn">Back to Login</a>
             </div>
         </form>
     </div>
+
+     <!-- TOTP Verification Section -->
+     <div id="totp-verification-container" style="display:none;">
+        <h2>Scan QR Code with Authenticator</h2>
+        <img id="qr-code-img" src="" alt="TOTP QR Code"> <!-- QR Code Placeholder -->
+        <form method="post" action="{{ url_for('verify_totp') }}">
+            <input type="text" name="totp_code" placeholder="Enter TOTP code" required class="form-control">
+            <input type="submit" value="Verify" class="btn">
+        </form>
+    </div>
+    
+    <script>
+        window.onload = function() {
+            var showTOTPVerification = "{{ show_totp_verification }}" === "True";
+            if (showTOTPVerification) {
+                document.getElementById('register-form-container').style.display = 'none';
+                document.getElementById('totp-verification-container').style.display = 'block';
+                document.getElementById('qr-code-img').src = "{{ qr_code_data }}";
+            }
+        };
+    </script>
+    
 </body>
 </html>

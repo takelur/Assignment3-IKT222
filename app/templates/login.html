@@ -37,16 +37,24 @@
                 {% for category, message in messages %}
                     <div class="{{ category }}">{{ message }}</div>
                 {% endfor %}
-        {% endif %}
+            {% endif %}
         {% endwith %}
         <!-- Login Form -->
         <form method="post" action="{{ url_for('login') }}">
-            <div class="form-group">
-                <input type="text" name="username" placeholder="Username" required class="form-control">
-            </div>
-            <div class="form-group">
-                <input type="password" name="password" placeholder="Password" required class="form-control">
-            </div>
+            {% if not show_totp_field %}
+                <!-- Username and Password fields -->
+                <div class="form-group">
+                    <input type="text" name="username" placeholder="Username" required class="form-control">
+                </div>
+                <div class="form-group">
+                    <input type="password" name="password" placeholder="Password" required class="form-control">
+                </div>
+            {% else %}
+                <!-- TOTP Code Input -->
+                <div class="form-group">
+                    <input type="text" name="totp_code" placeholder="TOTP Code" required class="form-control">
+                </div>
+            {% endif %}
             <!-- Buttons: Login and Register -->
             <div class="form-group button-group">
                 <input type="submit" value="Login" class="btn">
