@@ -24,6 +24,22 @@ app.secret_key = '1234567891234567'
 limiter = Limiter(key_func=get_remote_address)
 limiter.init_app(app)
 
+# Initialize the OAuth object to Google OAuth2 provider
+oauth = OAuth(app)
+oauth.register(
+    name='google',
+    client_id='436966627401-cvo2ojng8ule3lehtqf5ipta2jafm66g.apps.googleusercontent.com',
+    client_secret='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',
+    authorize_url='https://accounts.google.com/o/oauth2/v2/auth',
+    authorize_params=None,
+    access_token_url='https://oauth2.googleapis.com/token',
+    access_token_params=None,
+    refresh_token_url=None,
+    redirect_uri='http://localhost:5000/callback',
+    client_kwargs={'scope': 'openid email profile'},
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+)
+
 # Function to get the sqlite3 database connection
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
@@ -344,6 +360,51 @@ def login():
 
     
     return redirect(url_for('show_login'))
+
+# Route to login with Google OAuth2
+@app.route('/login_google')
+def login_google():
+    google = oauth.create_client('google')
+    redirect_uri = url_for('authorize_google', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+# Route callback for Google OAuth2
+@app.route('/callback')
+def authorize_google():
+    # Error handling if blank callback
+    if not request.args.get('code'):
+        flash("Google login failed. Please try again.", "error")
+        return redirect(url_for('login'))
+
+    google = oauth.create_client('google')
+    token = google.authorize_access_token()
+    if not token:
+        flash("Google login failed. Please try again.", "error")
+        return redirect(url_for('login'))
+    resp = google.get('https://www.googleapis.com/oauth2/v3/userinfo', token=token)
+    user_info = resp.json()
+
+    # Check if user exists in database
+    conn = get_db_connection()
+    user = conn.execute('SELECT username, is_admin FROM users WHERE username = ?', (user_info['email'],)).fetchone()
+    conn.close()
+
+    # Log in if user exists
+    if user:
+        session['username'] = user['username']
+        session['is_admin'] = user['is_admin']
+        return redirect(url_for('index'))
+    # Else create user
+    else:
+        conn = get_db_connection()
+        conn.execute('INSERT INTO users (username, is_admin) VALUES (?, ?)',
+                     (user_info['email'], False))
+        conn.commit()
+        conn.close()
+        session['username'] = user_info['email']
+        session['is_admin'] = False
+        return redirect(url_for('index'))
+
 
 
 # Route to logout
