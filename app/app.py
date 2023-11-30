@@ -95,6 +95,18 @@ def get_current_user_id():
             return user['id']
     return 2  # Default user id for "guest" (not logged in users)
 
+# Function to generate TOTP QR code
+def generate_qr_code(totp_uri):
+    # Generate QR code
+    image = qrcode.make(totp_uri)
+
+    # Save QR code to byte stream to view in template
+    byte_stream = io.BytesIO()
+    image.save(byte_stream, 'PNG')
+    byte_stream.seek(0)
+
+    return byte_stream
+
 # Route for the root page
 @app.route('/')
 def index():
@@ -288,25 +300,50 @@ def login():
 
         # Retrieve user
         conn = get_db_connection()
-        # Check if username exists
-        user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+        user = conn.execute('SELECT username, is_admin, totp_secret FROM users WHERE username = ?', (session['temp_username'],)).fetchone()
         conn.close()
 
-        # Check if user exists and password is correct
-        if user and check_password_hash(user['password'], password):
-            # Sets session cookie
+        # Check if TOTP code is valid
+        if user and user['totp_secret'] and pyotp.TOTP(user['totp_secret']).verify(totp_code):
             session['username'] = user['username']
             session['is_admin'] = user['is_admin']
-
-            # Redirects to index after login
+            session.pop('temp_username', None)  # Clean up
+            session.pop('show_totp_field', None)
             return redirect(url_for('index'))
         else:
             flash("Invalid TOTP code. Please try again.", "error")
+            session.pop('temp_username', None)  # Clean up
+            session.pop('show_totp_field', None)
+
+    # Initial login step
+    else:
+        username = request.form.get('username')
+        password = request.form.get('password')
+
         if not username or not password:
             flash("Please enter both username and password.", "error")
 
+        else:
+            conn = get_db_connection()
+            user = conn.execute('SELECT username, password, totp_secret, is_admin FROM users WHERE username = ?', (username,)).fetchone()
+            conn.close()
+
+            # Verify password and go to TOTP if the user has a secret
+            if user and check_password_hash(user['password'], password) and user['totp_secret']:
+                # Set temp username for TOTP verification
+                session['temp_username'] = user['username']
+                session['show_totp_field'] = True
+                return redirect(url_for('show_login'))
+            # Log in if no TOTP is used
+            elif user and check_password_hash(user['password'], password) and not user['totp_secret']:
+                session['username'] = user['username']
+                session['is_admin'] = user['is_admin']
+                return redirect(url_for('index'))
             else:
                 flash("Incorrect username or password. Please try again.", "error")
+
+    
+    return redirect(url_for('show_login'))
 
 
 # Route to logout
@@ -320,8 +357,6 @@ def logout():
 # Route to register account
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    error = None  # Initialize error variable
-
     # Check if submit is pressed
     if request.method == 'POST':
         username = request.form['username']
@@ -336,30 +371,67 @@ def register():
         elif password != confirm_pw:
             flash("Passwords do not match. Please try again.", "error")
 
-        conn = get_db_connection()
-        # Check if username already exists
-        existing_user = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
+        else:
+            conn = get_db_connection()
+            # Check if username already exists
+            existing_user = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
 
             if existing_user:
                 flash("Username already exists. Please choose a different username.", "error")
-        else:
-            # Generate password hash
-            password_hash = generate_password_hash(password)
+            else:
+                # Generate password hash
+                password_hash = generate_password_hash(password)
 
-            # Store login details in the database
-            conn.execute('INSERT INTO users (username, password) VALUES (?, ?)',
-                        (username, password_hash))
-            
-            conn.commit()
+                # Generate totp secret
+                totp_secret = pyotp.random_base32()
+
+                # Provision uri for QR code
+                totp_uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(username, issuer_name="Håvards blogg")
+
+                # Generate QR code
+                qr_byte_stream = generate_qr_code(totp_uri)
+
+                # Convert QR code to a data URL
+                qr_data_url = "data:image/png;base64," + base64.b64encode(qr_byte_stream.getvalue()).decode()
+
+                # Store TOTP secret in session for verification
+                session['temp_totp_secret'] = totp_secret
+                session['temp_username'] = username
+                session['temp_password_hash'] = password_hash
+
+                # Return the register page with QR code data
+                return render_template('register.html', qr_code_data=qr_data_url, show_totp_verification=True)
+
             conn.close()
 
-            # Redirect to login on registration
-            return redirect(url_for('login'))
-
-        conn.close()
-
     # Refresh with error message if unsuccessful registration
-    return render_template('register.html', error=error)
+    return render_template('register.html', qr_code_data="", show_totp_verification=False)
+
+# Route to verify TOTP code
+@app.route('/verify_totp', methods=['POST'])
+def verify_totp():
+    # Input form
+    totp_code = request.form['totp_code']
+
+    # Retrieve data from the temporary session (from registration route)
+    totp_secret = session.pop('temp_totp_secret', None)
+    username = session.pop('temp_username', None)
+    password_hash = session.pop('temp_password_hash', None)
+
+    # Check if TOTP code is valid
+    if totp_secret and pyotp.TOTP(totp_secret).verify(totp_code):
+        # Commit user to database
+        conn = get_db_connection()
+        conn.execute('INSERT INTO users (username, password, totp_secret) VALUES (?, ?, ?)',
+                     (username, password_hash, totp_secret))
+        conn.commit()
+        conn.close()
+        # Redirect to the login page
+        return redirect(url_for('login'))
+    else:
+        flash("Invalid TOTP code. Please register again.", "error")
+        return redirect(url_for('register'))
+
 
 
 if __name__ == "__main__":
