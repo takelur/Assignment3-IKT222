@@ -421,7 +421,7 @@ def verify_totp():
         error = db.create_user(username, password_hash, totp_secret)
 
         if error:
-            flash(error, "error")
+            flash("Something went wrong while creating your user, please try again", "error")
             return render_template('500.html'), 500
 
         return redirect(url_for('login'))
