@@ -17,8 +17,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(BASE_DIR, '../db/database.db')
 
+APP_SECRET_KEY = '1234567891234567'
+
 app = Flask(__name__)
-app.secret_key = '1234567891234567'
+app.secret_key = APP_SECRET_KEY
 
 # Initialize the Limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -659,8 +661,6 @@ def verify_totp():
 
 
 if __name__ == "__main__":
-    # Demo secret key
-    app.secret_key = '1234567891234567'
 
     # Commented for security (as explainedin report)
     #app.config['SESSION_COOKIE_HTTPONLY'] = False
