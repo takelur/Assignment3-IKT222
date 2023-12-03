@@ -288,7 +288,7 @@ def login():
 
             # Return if password is None (OAuth users)
             if not user["password"]:
-                flash("You cannot log in manually with an OAuth2 account, please use Google", "error")
+                flash("You cannot log in locally with an OAuth2 account, please use Google", "error")
                 return redirect(url_for('login'))
 
             # Verify password and go to TOTP if the user has a secret
@@ -438,7 +438,7 @@ def add_csp_header(response):
 
 if __name__ == "__main__":
 
-    # Commented for security (as explainedin report)
+    # Commented for security (as explained in report assignment 2)
     #app.config['SESSION_COOKIE_HTTPONLY'] = False
 
     db = DatabaseController(DATABASE)
