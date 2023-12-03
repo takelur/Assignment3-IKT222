@@ -410,6 +410,7 @@ def register():
 
 # Route to verify TOTP code
 @app.route('/verify_totp', methods=['POST'])
+@limiter.limit("5 per 10 minutes")
 def verify_totp():
     totp_code = request.form['totp_code']
     totp_secret = session.pop('temp_totp_secret', None)
