@@ -17,6 +17,9 @@ from db_controller import DatabaseController
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(BASE_DIR, '../db/database.db')
 
+# Database instance
+db = DatabaseController(DATABASE)
+
 APP_SECRET_KEY = '1234567891234567'
 SSL_CERT = os.path.join(BASE_DIR, 'server.crt')
 SSL_KEY = os.path.join(BASE_DIR, 'server.key')
@@ -456,9 +459,6 @@ if __name__ == "__main__":
 
     # Commented for security (as explained in report assignment 2)
     #app.config['SESSION_COOKIE_HTTPONLY'] = False
-
-    global db
-    db = DatabaseController(DATABASE)
 
     app.run(debug=True)
     #app.run(debug=True, ssl_context=(SSL_CERT, SSL_KEY))
