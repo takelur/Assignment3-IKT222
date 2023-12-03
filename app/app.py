@@ -19,6 +19,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(BASE_DIR, '../db/database.db')
 
 APP_SECRET_KEY = '1234567891234567'
+SSL_CERT = os.path.join(BASE_DIR, 'server.crt')
+SSL_KEY = os.path.join(BASE_DIR, 'server.key')
 
 app = Flask(__name__)
 app.secret_key = APP_SECRET_KEY
@@ -435,6 +437,14 @@ def add_csp_header(response):
     response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self'; object-src 'none';"
     return response
 
+# Redirect to HTTPS
+#@app.before_request
+#def before_request():
+#    if not request.is_secure:
+#        url = request.url.replace('http://', 'https://', 1)
+#        code = 301
+#        return redirect(url, code=code)
+
 
 if __name__ == "__main__":
 
@@ -444,3 +454,4 @@ if __name__ == "__main__":
     db = DatabaseController(DATABASE)
 
     app.run(debug=True)
+    #app.run(debug=True, ssl_context=(SSL_CERT, SSL_KEY))
