@@ -163,7 +163,7 @@ class DatabaseController:
         finally:
             conn.close()
 
-
+    # Create a user
     def create_user(self, username, password_hash=None, totp_secret=None, is_admin=False):
         conn = self.get_db_connection()
         if conn is None:

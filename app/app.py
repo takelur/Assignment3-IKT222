@@ -324,6 +324,7 @@ def authorize_google():
         flash("Google login failed. Please try again.", "error")
         return redirect(url_for('login'))
 
+    # Get client and retrieve token
     google = oauth.create_client('google')
     try:
         token = google.authorize_access_token()
@@ -334,6 +335,8 @@ def authorize_google():
     if not token:
         flash("Google login failed. Please try again.", "error")
         return redirect(url_for('login'))
+    
+    # Fetch user info
     resp = google.get('https://www.googleapis.com/oauth2/v3/userinfo', token=token)
     user_info = resp.json()
 
@@ -374,8 +377,10 @@ def register():
         password = request.form['password']
         confirm_pw = request.form['confirm_password']
 
+        # Sanitize input
         if bleach.clean(username) != username:
             flash("Username contains invalid characters. Please try again.", "error")
+        # Check if passwords match
         elif password != confirm_pw:
             flash("Passwords do not match. Please try again.", "error")
         else:
@@ -415,10 +420,12 @@ def register():
 @limiter.limit("5 per 10 minutes")
 def verify_totp():
     totp_code = request.form['totp_code']
+    # Remove temp data from session
     totp_secret = session.pop('temp_totp_secret', None)
     username = session.pop('temp_username', None)
     password_hash = session.pop('temp_password_hash', None)
 
+    # Check if TOTP code is valid
     if totp_secret and pyotp.TOTP(totp_secret).verify(totp_code):
         error = db.create_user(username, password_hash, totp_secret)
 
