@@ -427,7 +427,12 @@ def verify_totp():
     else:
         flash("Invalid TOTP code. Please register again.", "error")
         return redirect(url_for('register'))
-
+    
+# Add CSP headesr to responses
+@app.after_request
+def add_csp_header(response):
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self'; object-src 'none';"
+    return response
 
 
 if __name__ == "__main__":
