@@ -460,6 +460,7 @@ if __name__ == "__main__":
     # Commented for security (as explained in report assignment 2)
     #app.config['SESSION_COOKIE_HTTPONLY'] = False
 
+    global db
     db = DatabaseController(DATABASE)
 
     app.run(debug=True)
