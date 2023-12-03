@@ -17,6 +17,9 @@ from db_controller import DatabaseController
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(BASE_DIR, '../db/database.db')
 
+# Database instance variable:
+db = None
+
 APP_SECRET_KEY = '1234567891234567'
 SSL_CERT = os.path.join(BASE_DIR, 'server.crt')
 SSL_KEY = os.path.join(BASE_DIR, 'server.key')
