@@ -89,7 +89,7 @@ def create():
         user_id = db.get_current_user_id(session) # defaults to guest if not logged in
                
         # Chek if image file is included in request
-        if 'image' in request.files:
+        if 'image' in request.files and request.files['image'].filename != '':
             image = request.files['image']
 
             # Check if file type is allowed
