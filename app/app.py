@@ -398,7 +398,7 @@ def register():
                 totp_secret = pyotp.random_base32()
 
                 # Provision uri for QR code
-                totp_uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(username, issuer_name="YourAppName")
+                totp_uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(username, issuer_name="HavardBlog")
 
                 # Generate QR code
                 qr_byte_stream = generate_qr_code(totp_uri)
