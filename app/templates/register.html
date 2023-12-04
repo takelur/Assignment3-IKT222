@@ -62,25 +62,15 @@
     </div>
 
      <!-- TOTP Verification Section -->
-     <div id="totp-verification-container" style="display:none;">
+     {% if show_totp_verification %}
+    <div id="totp-verification-container">
         <h2>Scan QR Code with Authenticator</h2>
-        <img id="qr-code-img" src="" alt="TOTP QR Code"> <!-- QR Code Placeholder -->
+        <img id="qr-code-img" src="{{ qr_code_data }}" alt="TOTP QR Code"> <!-- QR Code will be shown here -->
         <form method="post" action="{{ url_for('verify_totp') }}">
             <input type="text" name="totp_code" placeholder="Enter TOTP code" required class="form-control">
             <input type="submit" value="Verify" class="btn">
         </form>
     </div>
-    
-    <script>
-        window.onload = function() {
-            var showTOTPVerification = "{{ show_totp_verification }}" === "True";
-            if (showTOTPVerification) {
-                document.getElementById('register-form-container').style.display = 'none';
-                document.getElementById('totp-verification-container').style.display = 'block';
-                document.getElementById('qr-code-img').src = "{{ qr_code_data }}";
-            }
-        };
-    </script>
-    
+    {% endif %}
 </body>
 </html>

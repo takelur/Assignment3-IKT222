@@ -443,7 +443,7 @@ def verify_totp():
 # Add CSP headesr to responses
 @app.after_request
 def add_csp_header(response):
-    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self'; object-src 'none';"
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self'; object-src 'none'; img-src 'self' data:;"
     return response
 
 # Redirect to HTTPS
